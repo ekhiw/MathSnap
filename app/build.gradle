@@ -23,9 +23,15 @@ android {
     }
 
     buildTypes {
+        debug {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            buildConfigField "String", "BASE_URL", "\"https://644ae099a8370fb32159c265.mockapi.io\""
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            buildConfigField "String", "BASE_URL", "\"https://api.ocr.space\""
         }
     }
     compileOptions {
@@ -44,6 +50,28 @@ android {
     packagingOptions {
         resources {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
+        }
+    }
+    flavorDimensions "themecolor" , "imgsrc"
+    productFlavors {
+        red {
+            dimension "themecolor"
+            resValue "string", "app_name", "MathSnap - red"
+            buildConfigField "String", "BASE_THEME", "\"red\""
+        }
+        green {
+            dimension "themecolor"
+            resValue "string", "app_name", "MathSnap - green"
+            buildConfigField "String", "BASE_THEME", "\"green\""
+        }
+        fs {
+            dimension "imgsrc"
+            buildConfigField "Boolean", "FS_ONLY", "true"
+        }
+        cam {
+            dimension "imgsrc"
+            buildConfigField "Boolean", "FS_ONLY", "false"
+
         }
     }
 }
