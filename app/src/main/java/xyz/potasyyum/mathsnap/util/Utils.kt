@@ -58,4 +58,18 @@ object Utils {
             storageDir /* directory */
         )
     }
+
+    fun calculateMathExpression(numbers: List<String>): Double {
+        val firstNumber : Double = numbers[0].toDoubleOrNull() ?: 0.toDouble()
+        val mathOps = numbers[1]
+        val secondNumber : Double  = numbers[2].toDoubleOrNull() ?: 0.toDouble()
+
+        return when (mathOps) {
+            "+" -> firstNumber + secondNumber
+            "-" -> firstNumber - secondNumber
+            "*" -> firstNumber * secondNumber
+            "/" -> firstNumber / secondNumber
+            else -> 0.toDouble()
+        }
+    }
 }

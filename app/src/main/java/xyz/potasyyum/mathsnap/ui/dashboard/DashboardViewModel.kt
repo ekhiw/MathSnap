@@ -10,13 +10,10 @@ import com.orhanobut.logger.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
-import okhttp3.RequestBody.Companion.asRequestBody
 import xyz.potasyyum.mathsnap.BuildConfig
 import xyz.potasyyum.mathsnap.network.model.OcrRequest
 import xyz.potasyyum.mathsnap.repository.OcrRepository
-import java.io.File
+import xyz.potasyyum.mathsnap.util.Utils
 import javax.inject.Inject
 
 @HiltViewModel
@@ -29,9 +26,10 @@ class DashboardViewModel @Inject constructor(
         private set
 
     init {
+        // TODO get list from db
         val test = mutableListOf<String>()
-        test.add("item1")
-        test.add("item2")
+        test.add("1+2")
+        test.add("100-5")
 
         uiState = uiState.copy(
             list = test
@@ -42,6 +40,7 @@ class DashboardViewModel @Inject constructor(
         when (event) {
             is DashboardEvent.GetTextFromPicture -> {
                 viewModelScope.launch(Dispatchers.IO) {
+                    uiState.isLoading = true
                     val ocrRequest = OcrRequest(
                         apiKey = BuildConfig.API_KEY,
                         file = event.file,
@@ -49,19 +48,45 @@ class DashboardViewModel @Inject constructor(
                     )
                     val response = ocrRepository.getOcr(ocrRequest)
                     if (response.data != null){
-                        Logger.d(response.data.parsedResults)
                         response.data.parsedResults?.let { parsedList ->
-                            parsedList.forEach {
-                                val regex = Regex("^\\d+([*\\/+-]\\d+)+$")
-                                val match = regex.find("${it?.parsedText}")
+                            val parsedTextList = mutableListOf<String>()
+                            parsedList.forEach { it ->
+                                it?.parsedText?.split("\n")?.forEach { line ->
+                                    parsedTextList.add(line.replace("\\s".toRegex(), ""))
+                                }
+                            }
+                            parsedTextList.forEach {
+                                Logger.d("Loop EKHIW $it")
+                                val regex = Regex("^(\\d+)([*\\/+-])(\\d+)$")
+                                val match = regex.find(it)
                                 if (match != null) {
-                                    Logger.d("${it?.parsedText} is a valid math equation")
+                                    val groups = match.groupValues.drop(1)
+                                    Logger.d("$it is a valid math equation")
+                                    Logger.d("EKHIW \n${groups}")
+                                    val result = Utils.calculateMathExpression(groups)
+
+                                    // TODO save to database and show list from database
+                                    val test = mutableListOf<String>()
+                                    test.addAll(uiState.list)
+                                    test.add("$it=${result}")
+
+                                    uiState = uiState.copy(
+                                        list = test,
+                                        openResultDialog = true,
+                                        equationResult = it,
+                                        isLoading = false
+                                    )
                                 } else {
-                                    Logger.d("${it?.parsedText} is not a valid math equation")
+                                    // TODO show collect all non valid result, then show Dialog
+                                    Logger.d("$it is not a valid math equation")
+                                    uiState.isLoading = false
                                 }
                             }
 
                         }
+                    } else {
+                        // TODO error handling
+                        uiState.isLoading = false
                     }
                 }
             }

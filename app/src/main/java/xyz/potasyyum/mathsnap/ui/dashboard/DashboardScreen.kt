@@ -3,12 +3,9 @@ package xyz.potasyyum.mathsnap.ui.dashboard
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Matrix
 import android.net.Uri
-import android.os.Environment
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -20,16 +17,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.orhanobut.logger.Logger
+import xyz.potasyyum.mathsnap.BuildConfig
 import xyz.potasyyum.mathsnap.util.Utils
 import java.io.*
-import java.text.SimpleDateFormat
-import java.util.*
 
 @Composable
 fun DashboardScreen(
@@ -74,20 +68,22 @@ fun DashboardScreen(
                         onDismissRequest = { requestToOpen = false },
                     ) {
                         DropdownMenuItem(
+                            enabled = !BuildConfig.FS_ONLY && !uiState.isLoading,
                             onClick = {
                                 requestToOpen = false
                                 launcher.launch(uri)
                             }
                         ) {
-                            Text("From camera")
+                            Text(text = if (!BuildConfig.FS_ONLY && uiState.isLoading) "Loading.." else "From camera")
                         }
                         DropdownMenuItem(
+                            enabled = BuildConfig.FS_ONLY && !uiState.isLoading,
                             onClick = {
                                 requestToOpen = false
                                 launcher.launch(uri)
                             }
                         ) {
-                            Text("From gallery")
+                            Text(text = if (BuildConfig.FS_ONLY && uiState.isLoading) "Loading.." else "From gallery")
                         }
                     }
                     FloatingActionButton(
