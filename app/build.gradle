@@ -26,12 +26,14 @@ android {
         debug {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            buildConfigField "String", "BASE_URL", "\"https://644ae099a8370fb32159c265.mockapi.io\""
+            buildConfigField "String", "BASE_URL", "\"https://api.ocr.space\""
+            buildConfigField "String", "API_KEY", "\"K83702178488957\""
         }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             buildConfigField "String", "BASE_URL", "\"https://api.ocr.space\""
+            buildConfigField "String", "API_KEY", "\"example\""
         }
     }
     compileOptions {
@@ -95,6 +97,9 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-runtime-compose:$lifecycle_version"
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version"
 
+    //================= Accompanist ================
+    implementation "com.google.accompanist:accompanist-permissions:$accompanist_version"
+
     //==================== Hilt ====================
     implementation "com.google.dagger:hilt-android:$hilt_version"
     kapt "com.google.dagger:hilt-compiler:$hilt_version"
@@ -122,6 +127,10 @@ dependencies {
 
     //=================== Logger ===================
     implementation 'com.orhanobut:logger:2.2.0'
+
+    //=================== Chuck ====================
+    debugImplementation "com.github.chuckerteam.chucker:library:$chucker_version"
+    releaseImplementation "com.github.chuckerteam.chucker:library-no-op:$chucker_version"
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'

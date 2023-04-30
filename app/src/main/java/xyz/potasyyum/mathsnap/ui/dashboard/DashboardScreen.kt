@@ -33,7 +33,8 @@ import java.util.*
 
 @Composable
 fun DashboardScreen(
-    uiState: DashboardUiState
+    uiState : DashboardUiState,
+    onEvent : (DashboardEvent) -> Unit
 ) {
     val scaffoldState = rememberScaffoldState()
 
@@ -50,6 +51,7 @@ fun DashboardScreen(
             if (success) {
                 Utils.resizeAndRotateImage(uri,ctx)
                 result.value = imageFromResult(ctx, uri)
+                onEvent(DashboardEvent.GetTextFromPicture(file))
             }
         }
 
@@ -108,9 +110,9 @@ fun DashboardScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()) {
-                        result.value?.let { image ->
-                            Image(image.asImageBitmap(), contentDescription = null)
-                        }
+//                        result.value?.let { image ->
+//                            Image(image.asImageBitmap(), contentDescription = null)
+//                        }
                         ListOcrResult(uiState)
                     }
                 }

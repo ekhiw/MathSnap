@@ -1,6 +1,7 @@
 package xyz.potasyyum.mathsnap.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.traceEventEnd
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -18,7 +19,9 @@ fun MainApp() {
         composable(Route.DASHBOARD) { backStackEntry ->
             val viewModel = hiltViewModel<DashboardViewModel>()
             val uiState = viewModel.uiState
-            DashboardScreen(uiState)
+            DashboardScreen(uiState, onEvent = { event ->
+                viewModel.onEvent(event)
+            })
         }
     }
 
