@@ -1,10 +1,12 @@
 package xyz.potasyyum.mathsnap.ui
 
 import androidx.compose.runtime.Composable
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import xyz.potasyyum.mathsnap.ui.dashboard.DashboardScreen
+import xyz.potasyyum.mathsnap.ui.dashboard.DashboardViewModel
 
 @Composable
 fun MainApp() {
@@ -14,7 +16,9 @@ fun MainApp() {
         startDestination = Route.DASHBOARD
     ) {
         composable(Route.DASHBOARD) { backStackEntry ->
-            DashboardScreen()
+            val viewModel = hiltViewModel<DashboardViewModel>()
+            val uiState = viewModel.uiState
+            DashboardScreen(uiState)
         }
     }
 
