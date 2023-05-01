@@ -67,9 +67,7 @@ object Utils {
         return when (mathOps) {
             "+" -> firstNumber + secondNumber
             "-" -> firstNumber - secondNumber
-            "*" -> firstNumber * secondNumber
-            "x" -> firstNumber * secondNumber
-            "X" -> firstNumber * secondNumber
+            "×","*","x","X" -> firstNumber * secondNumber
             "/" -> firstNumber / secondNumber
             else -> 0.toDouble()
         }

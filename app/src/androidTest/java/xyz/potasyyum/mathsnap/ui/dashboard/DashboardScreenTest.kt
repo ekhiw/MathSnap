@@ -4,6 +4,7 @@ import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import org.junit.Rule
 import org.junit.Test
+import xyz.potasyyum.mathsnap.domain.OcrResultItem
 
 class DashboardScreenTest {
 
@@ -12,9 +13,8 @@ class DashboardScreenTest {
 
     @Test
     fun showList() {
-        val itemList = mutableListOf<String>()
-        itemList.add("item1")
-        itemList.add("item2")
+        val itemList = mutableListOf<OcrResultItem>()
+        itemList.add(OcrResultItem("4","*","2","8"))
 
         composeRule.setContent {
             DashboardScreen(uiState = DashboardUiState(
@@ -25,7 +25,7 @@ class DashboardScreenTest {
         }
 
         itemList.forEach { item ->
-            composeRule.onNodeWithText(item).assertIsDisplayed()
+            composeRule.onNodeWithText("4*2=8").assertIsDisplayed()
         }
     }
 

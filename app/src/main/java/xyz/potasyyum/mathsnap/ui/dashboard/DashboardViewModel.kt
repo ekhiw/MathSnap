@@ -9,8 +9,11 @@ import androidx.lifecycle.viewModelScope
 import com.orhanobut.logger.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import xyz.potasyyum.mathsnap.BuildConfig
+import xyz.potasyyum.mathsnap.domain.OcrResultItem
 import xyz.potasyyum.mathsnap.network.model.OcrRequest
 import xyz.potasyyum.mathsnap.network.model.OcrResponse
 import xyz.potasyyum.mathsnap.repository.OcrRepository
@@ -27,14 +30,19 @@ class DashboardViewModel @Inject constructor(
         private set
 
     init {
-        // TODO get list from db
-        val test = mutableListOf<String>()
-        test.add("1+2")
-        test.add("100-5")
-
-        uiState = uiState.copy(
-            list = test
-        )
+        viewModelScope.launch(Dispatchers.IO) {
+            ocrRepository.ocrList.collect {
+                if (!it.isNullOrEmpty()) {
+                    val resultList = mutableListOf<OcrResultItem>()
+                    resultList.addAll(it)
+                    withContext(Dispatchers.Main) {
+                        uiState = uiState.copy(
+                            list = resultList
+                        )
+                    }
+                }
+            }
+        }
     }
 
     private fun handleOcrResult(response: OcrResponse) {
@@ -49,19 +57,24 @@ class DashboardViewModel @Inject constructor(
                 parsedTextList = parsedTextList
             )
             parsedTextList.forEach {
-                val regex = Regex("(\\d+)([*\\/+-])(\\d+)")
+                val regex = Regex("(\\d+)([×xX*\\/+-])(\\d+)")
                 val match = regex.find(it)
                 if (match != null) {
                     val groups = match.groupValues.drop(1)
                     Logger.d("$it is a valid math equation")
                     Logger.d("EKHIW \n${groups}")
-                    val groupToEquation = groups.joinToString("")
                     val result = Utils.calculateMathExpression(groups)
+                    val ocrResultItem = OcrResultItem(
+                        groups[0],
+                        groups[1],
+                        groups[2],
+                        "$result"
+                    )
 
-                    // TODO save to database and show list from database
-                    val test = mutableListOf<String>()
+                    ocrRepository.insertOcrResult(ocrResultItem)
+                    val test = mutableListOf<OcrResultItem>()
                     test.addAll(uiState.list)
-                    test.add("$groupToEquation=${result}")
+                    test.add(ocrResultItem)
 
                     uiState = uiState.copy(
                         list = test,

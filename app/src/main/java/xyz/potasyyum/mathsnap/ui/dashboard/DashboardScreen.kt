@@ -183,7 +183,7 @@ fun ListOcrResult (uiState: DashboardUiState) {
             .background(Color.Transparent)
     ) {
         items(uiState.list) { item ->
-            Text(text = item)
+            Text(text = "${item.leftNumber}${item.mathOperator}${item.rightNumber}=${item.result}")
         }
     }
 }
