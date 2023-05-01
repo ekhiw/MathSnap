@@ -68,6 +68,8 @@ object Utils {
             "+" -> firstNumber + secondNumber
             "-" -> firstNumber - secondNumber
             "*" -> firstNumber * secondNumber
+            "x" -> firstNumber * secondNumber
+            "X" -> firstNumber * secondNumber
             "/" -> firstNumber / secondNumber
             else -> 0.toDouble()
         }

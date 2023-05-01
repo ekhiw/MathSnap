@@ -12,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import xyz.potasyyum.mathsnap.BuildConfig
 import xyz.potasyyum.mathsnap.network.model.OcrRequest
+import xyz.potasyyum.mathsnap.network.model.OcrResponse
 import xyz.potasyyum.mathsnap.repository.OcrRepository
 import xyz.potasyyum.mathsnap.util.Utils
 import javax.inject.Inject
@@ -36,6 +37,51 @@ class DashboardViewModel @Inject constructor(
         )
     }
 
+    private fun handleOcrResult(response: OcrResponse) {
+        response.parsedResults?.let { parsedList ->
+            val parsedTextList = mutableListOf<String>()
+            parsedList.forEach { it ->
+                it?.parsedText?.split("\n")?.forEach { line ->
+                    parsedTextList.add(line.replace("\\s".toRegex(), ""))
+                }
+            }
+            uiState = uiState.copy(
+                parsedTextList = parsedTextList
+            )
+            parsedTextList.forEach {
+                val regex = Regex("(\\d+)([*\\/+-])(\\d+)")
+                val match = regex.find(it)
+                if (match != null) {
+                    val groups = match.groupValues.drop(1)
+                    Logger.d("$it is a valid math equation")
+                    Logger.d("EKHIW \n${groups}")
+                    val groupToEquation = groups.joinToString("")
+                    val result = Utils.calculateMathExpression(groups)
+
+                    // TODO save to database and show list from database
+                    val test = mutableListOf<String>()
+                    test.addAll(uiState.list)
+                    test.add("$groupToEquation=${result}")
+
+                    uiState = uiState.copy(
+                        list = test,
+                        equationResult = it,
+                        isLoading = false
+                    )
+                } else {
+                    Logger.d("$it is not a valid math equation")
+                    uiState = uiState.copy(
+                        isLoading = false
+                    )
+                }
+            }
+            uiState = uiState.copy(
+                openResultDialog = true,
+            )
+
+        }
+    }
+
     fun onEvent(event : DashboardEvent) {
         when (event) {
             is DashboardEvent.GetTextFromPicture -> {
@@ -48,47 +94,17 @@ class DashboardViewModel @Inject constructor(
                     )
                     val response = ocrRepository.getOcr(ocrRequest)
                     if (response.data != null){
-                        response.data.parsedResults?.let { parsedList ->
-                            val parsedTextList = mutableListOf<String>()
-                            parsedList.forEach { it ->
-                                it?.parsedText?.split("\n")?.forEach { line ->
-                                    parsedTextList.add(line.replace("\\s".toRegex(), ""))
-                                }
-                            }
-                            parsedTextList.forEach {
-                                Logger.d("Loop EKHIW $it")
-                                val regex = Regex("^(\\d+)([*\\/+-])(\\d+)$")
-                                val match = regex.find(it)
-                                if (match != null) {
-                                    val groups = match.groupValues.drop(1)
-                                    Logger.d("$it is a valid math equation")
-                                    Logger.d("EKHIW \n${groups}")
-                                    val result = Utils.calculateMathExpression(groups)
-
-                                    // TODO save to database and show list from database
-                                    val test = mutableListOf<String>()
-                                    test.addAll(uiState.list)
-                                    test.add("$it=${result}")
-
-                                    uiState = uiState.copy(
-                                        list = test,
-                                        openResultDialog = true,
-                                        equationResult = it,
-                                        isLoading = false
-                                    )
-                                } else {
-                                    // TODO show collect all non valid result, then show Dialog
-                                    Logger.d("$it is not a valid math equation")
-                                    uiState.isLoading = false
-                                }
-                            }
-
-                        }
+                        handleOcrResult(response.data)
                     } else {
                         // TODO error handling
                         uiState.isLoading = false
                     }
                 }
+            }
+            is DashboardEvent.CloseDialog -> {
+                uiState = uiState.copy(
+                    openResultDialog = false
+                )
             }
             else -> {
 

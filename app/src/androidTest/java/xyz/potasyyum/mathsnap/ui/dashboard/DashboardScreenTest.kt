@@ -33,7 +33,7 @@ class DashboardScreenTest {
     fun showFab() {
         composeRule.setContent {
             DashboardScreen(uiState = DashboardUiState(
-                list = emptyList()
+                list = mutableListOf()
             ), onEvent = { event ->
 
             })
@@ -46,7 +46,7 @@ class DashboardScreenTest {
     fun showDropdownMenu() {
         composeRule.setContent {
             DashboardScreen(uiState = DashboardUiState(
-                list = emptyList()
+                list = mutableListOf()
             ), onEvent = { event ->
 
             })

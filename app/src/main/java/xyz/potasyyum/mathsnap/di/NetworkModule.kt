@@ -22,25 +22,23 @@ object NetworkModule {
 
     @Singleton
     @Provides
-    fun provideOkHttpClient(@ApplicationContext context: Context) = if (BuildConfig.DEBUG) {
-        val loggingInterceptor = HttpLoggingInterceptor()
-        loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY)
-        OkHttpClient.Builder()
-            .addInterceptor(loggingInterceptor)
-            .addInterceptor(
-                ChuckerInterceptor.Builder(context)
-                    .collector(ChuckerCollector(context,true))
-                    .maxContentLength(250000L)
-                    .redactHeaders(emptySet())
-                    .alwaysReadResponseBody(true)
-                    .build()
-            )
+    fun provideOkHttpClient(@ApplicationContext context: Context) = OkHttpClient.Builder()
+            .apply {
+                if (BuildConfig.DEBUG) {
+                    addInterceptor(
+                        ChuckerInterceptor.Builder(context)
+                            .collector(ChuckerCollector(context, true))
+                            .maxContentLength(250000L)
+                            .redactHeaders(emptySet())
+                            .alwaysReadResponseBody(true)
+                            .build()
+                    )
+//                    val loggingInterceptor = HttpLoggingInterceptor()
+//                    loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY)
+//                    addInterceptor(loggingInterceptor)
+                }
+            }
             .build()
-    } else {
-        OkHttpClient
-            .Builder()
-            .build()
-    }
 
     @Singleton
     @Provides

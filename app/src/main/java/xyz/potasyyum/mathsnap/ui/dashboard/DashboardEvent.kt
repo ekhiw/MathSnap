@@ -5,4 +5,5 @@ import java.io.File
 
 sealed class DashboardEvent {
     data class GetTextFromPicture(val file: File): DashboardEvent()
+    object CloseDialog: DashboardEvent()
 }

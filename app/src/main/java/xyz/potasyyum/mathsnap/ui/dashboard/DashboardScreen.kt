@@ -10,6 +10,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -18,10 +21,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.core.content.FileProvider
 import com.orhanobut.logger.Logger
 import xyz.potasyyum.mathsnap.BuildConfig
+import xyz.potasyyum.mathsnap.ui.theme.MathSnapTheme
 import xyz.potasyyum.mathsnap.util.Utils
 import java.io.*
 
@@ -103,12 +111,48 @@ fun DashboardScreen(
                             bottom = it.calculateBottomPadding()
                         )
                 ) {
+                    if (uiState.openResultDialog){
+                        Dialog(onDismissRequest = {
+                            onEvent(DashboardEvent.CloseDialog)
+                        }) {
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .wrapContentHeight(),
+                                shape = RoundedCornerShape(size = 10.dp)
+                            ) {
+                                Column(modifier = Modifier.padding(all = 16.dp)) {
+                                    Text(
+                                        fontWeight = FontWeight.Bold,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.padding(12.dp),
+                                        text = "List of parsed text from response")
+                                    Column(modifier = Modifier
+                                        .padding(all = 16.dp)
+                                        .fillMaxWidth()
+                                        .fillMaxHeight(0.6f)
+                                        .verticalScroll(rememberScrollState())
+                                    ) {
+                                        uiState.parsedTextList.forEach {textItem ->
+                                            Text(text = textItem)
+                                        }
+                                    }
+                                    Box(modifier = Modifier
+                                            .fillMaxWidth(1f)
+                                            .padding(12.dp),
+                                        contentAlignment = Alignment.Center) {
+                                        Button(onClick = { onEvent(DashboardEvent.CloseDialog) }) {
+                                            Text(text = "Close")
+                                        }
+
+                                    }
+                                }
+                            }
+                        }
+                    }
                     Box(
                         modifier = Modifier
                             .fillMaxSize()) {
-//                        result.value?.let { image ->
-//                            Image(image.asImageBitmap(), contentDescription = null)
-//                        }
                         ListOcrResult(uiState)
                     }
                 }
@@ -141,5 +185,18 @@ fun ListOcrResult (uiState: DashboardUiState) {
         items(uiState.list) { item ->
             Text(text = item)
         }
+    }
+}
+
+
+@Preview(showBackground = true)
+@Composable
+fun DefaultPreview() {
+    MathSnapTheme {
+//        DashboardScreen(uiState = DashboardUiState(
+//            list = mutableListOf()
+//        ), onEvent = { event ->
+//
+//        })
     }
 }
