@@ -37,7 +37,7 @@ To use the app, open it on your Android device and follow these steps:
 3. Take a photo of a math problem or select an existing image from your gallery.
 4. Wait for the app to process the image and display the solution.
 
-
+<img src="Screenshots/image1.png"/>
 ## API Key
 
 To use the OCR.Space API, you need to obtain an API key by creating a free account. Once you have an API key, add it to the `build.gradle` file as described in the Installation section.
