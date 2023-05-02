@@ -8,14 +8,14 @@ import androidx.compose.runtime.Composable
 import xyz.potasyyum.mathsnap.BuildConfig
 
 private val DarkColorPalette = darkColors(
-    primary = Purple200,
-    primaryVariant = Purple700,
+    primary = if (BuildConfig.BASE_THEME == "green") tailwindColors().green200 else tailwindColors().red200,
+    primaryVariant = if (BuildConfig.BASE_THEME == "green") tailwindColors().green700 else tailwindColors().red700,
     secondary = if (BuildConfig.BASE_THEME == "green") tailwindColors().green800 else tailwindColors().red800
 )
 
 private val LightColorPalette = lightColors(
-    primary = Purple500,
-    primaryVariant = Purple700,
+    primary = if (BuildConfig.BASE_THEME == "green") tailwindColors().green500 else tailwindColors().red500,
+    primaryVariant = if (BuildConfig.BASE_THEME == "green") tailwindColors().green700 else tailwindColors().red700,
     secondary = if (BuildConfig.BASE_THEME == "green") tailwindColors().green800 else tailwindColors().red800
 
     /* Other default colors to override

@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -31,9 +32,11 @@ import androidx.core.content.FileProvider
 import com.orhanobut.logger.Logger
 import kotlinx.coroutines.flow.collectLatest
 import xyz.potasyyum.mathsnap.BuildConfig
+import xyz.potasyyum.mathsnap.R
 import xyz.potasyyum.mathsnap.core.utils.TestTags
 import xyz.potasyyum.mathsnap.domain.OcrResultItem
 import xyz.potasyyum.mathsnap.domain.OcrResultList
+import xyz.potasyyum.mathsnap.domain.TabPos
 import xyz.potasyyum.mathsnap.ui.theme.MathSnapTheme
 import xyz.potasyyum.mathsnap.ui.theme.tailwindColors
 import xyz.potasyyum.mathsnap.util.Utils
@@ -84,6 +87,29 @@ fun DashboardScreen(
             scaffoldState = scaffoldState,
             floatingActionButtonPosition = FabPosition.Center,
             isFloatingActionButtonDocked = true,
+            bottomBar = {
+                BottomAppBar(
+                    backgroundColor = MaterialTheme.colors.primary,
+                    cutoutShape = RoundedCornerShape(50),
+                    content = {
+                        BottomNavigationItem(
+                            icon = { Icon(painterResource(R.drawable.database_48px), "Room db") },
+                            selected = uiState.tabState == TabPos.ROOMTAB,
+                            onClick = { onEvent(DashboardEvent.ChangeTabSelection(TabPos.ROOMTAB)) },
+                            selectedContentColor = tailwindColors().blue800,
+                            unselectedContentColor = Color.White,
+                        )
+                        BottomNavigationItem(
+                            icon = { Icon(painterResource(R.drawable.folder_open_48px), "File") },
+                            selected = uiState.tabState == TabPos.FILETAB,
+                            onClick = { onEvent(DashboardEvent.ChangeTabSelection(TabPos.FILETAB)) },
+                            selectedContentColor = tailwindColors().blue800,
+                            unselectedContentColor = Color.White,
+                        )
+                    }
+                )
+
+            },
             floatingActionButton = {
                 var requestToOpen by remember {
                     mutableStateOf(false)
@@ -174,7 +200,8 @@ fun DashboardScreen(
                     }
                     Column(modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp)) {
+                        .padding(16.dp))
+                    {
                         Text(text = "MathSnap",
                             fontWeight = FontWeight.ExtraBold,
                             fontSize = 18.sp)
