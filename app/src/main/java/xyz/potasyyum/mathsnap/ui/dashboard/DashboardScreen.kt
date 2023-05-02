@@ -1,6 +1,7 @@
 package xyz.potasyyum.mathsnap.ui.dashboard
 
 import android.net.Uri
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -29,6 +30,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.FileProvider
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberPermissionState
+import com.google.accompanist.permissions.shouldShowRationale
 import com.orhanobut.logger.Logger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -42,6 +46,7 @@ import xyz.potasyyum.mathsnap.ui.theme.MathSnapTheme
 import xyz.potasyyum.mathsnap.ui.theme.tailwindColors
 import xyz.potasyyum.mathsnap.util.Utils
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun DashboardScreen(
     uiState : DashboardUiState,
@@ -58,6 +63,16 @@ fun DashboardScreen(
         "xyz.potasyyum.mathsnap.provider",
         file
     )
+
+    val notificationPermissionState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        rememberPermissionState(
+            android.Manifest.permission.POST_NOTIFICATIONS
+        )
+    } else {
+        null
+    }
+
+
 
     val launcherCamera =
         rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
@@ -84,6 +99,19 @@ fun DashboardScreen(
     LaunchedEffect(key1 = true) {
         uiState.listState.collect { ocrListFromViewModel ->
             ocrList = ocrListFromViewModel
+        }
+    }
+
+    LaunchedEffect(key1 = true) {
+        if (BuildConfig.DEBUG && notificationPermissionState != null) {
+            notificationPermissionState.launchPermissionRequest()
+            if (notificationPermissionState.status.shouldShowRationale) {
+                // TODO show dialog
+
+            } else {
+                // TODO open app setting
+
+            }
         }
     }
 
