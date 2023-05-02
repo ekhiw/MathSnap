@@ -5,17 +5,18 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.darkColors
 import androidx.compose.material.lightColors
 import androidx.compose.runtime.Composable
+import xyz.potasyyum.mathsnap.BuildConfig
 
 private val DarkColorPalette = darkColors(
     primary = Purple200,
     primaryVariant = Purple700,
-    secondary = Teal200
+    secondary = if (BuildConfig.BASE_THEME == "green") tailwindColors().green800 else tailwindColors().red800
 )
 
 private val LightColorPalette = lightColors(
     primary = Purple500,
     primaryVariant = Purple700,
-    secondary = Teal200
+    secondary = if (BuildConfig.BASE_THEME == "green") tailwindColors().green800 else tailwindColors().red800
 
     /* Other default colors to override
     background = Color.White,

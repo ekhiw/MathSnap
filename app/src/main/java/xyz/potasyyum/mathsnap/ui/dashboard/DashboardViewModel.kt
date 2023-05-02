@@ -79,13 +79,9 @@ class DashboardViewModel @Inject constructor(
                     uiState = uiState.copy(
                         list = test,
                         equationResult = it,
-                        isLoading = false
                     )
                 } else {
                     Logger.d("$it is not a valid math equation")
-                    uiState = uiState.copy(
-                        isLoading = false
-                    )
                 }
             }
             uiState = uiState.copy(
@@ -99,7 +95,7 @@ class DashboardViewModel @Inject constructor(
         when (event) {
             is DashboardEvent.GetTextFromPicture -> {
                 viewModelScope.launch(Dispatchers.IO) {
-                    uiState.isLoading = true
+                    uiState.loadingState.emit(true)
                     val ocrRequest = OcrRequest(
                         apiKey = BuildConfig.API_KEY,
                         file = event.file,
@@ -108,9 +104,10 @@ class DashboardViewModel @Inject constructor(
                     val response = ocrRepository.getOcr(ocrRequest)
                     if (response.data != null){
                         handleOcrResult(response.data)
+                        uiState.loadingState.emit(false)
                     } else {
                         // TODO error handling
-                        uiState.isLoading = false
+                        uiState.loadingState.emit(false)
                     }
                 }
             }

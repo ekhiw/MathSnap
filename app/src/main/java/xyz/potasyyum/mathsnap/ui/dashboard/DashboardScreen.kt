@@ -1,11 +1,10 @@
 package xyz.potasyyum.mathsnap.ui.dashboard
 
-import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -21,17 +20,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.FileProvider
 import com.orhanobut.logger.Logger
+import kotlinx.coroutines.flow.collectLatest
 import xyz.potasyyum.mathsnap.BuildConfig
+import xyz.potasyyum.mathsnap.core.utils.TestTags
+import xyz.potasyyum.mathsnap.domain.OcrResultItem
 import xyz.potasyyum.mathsnap.ui.theme.MathSnapTheme
+import xyz.potasyyum.mathsnap.ui.theme.tailwindColors
 import xyz.potasyyum.mathsnap.util.Utils
-import java.io.*
 
 @Composable
 fun DashboardScreen(
@@ -40,6 +44,7 @@ fun DashboardScreen(
 ) {
     val scaffoldState = rememberScaffoldState()
 
+    var loadingState by remember { mutableStateOf(false) }
     val ctx = LocalContext.current
     val file = Utils.createImageFile(ctx)
     val uri: Uri = FileProvider.getUriForFile(
@@ -47,15 +52,28 @@ fun DashboardScreen(
         "xyz.potasyyum.mathsnap.provider",
         file
     )
-    val result = remember { mutableStateOf<Bitmap?>(null) }
-    val launcher =
+
+    val launcherCamera =
         rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
             if (success) {
                 Utils.resizeAndRotateImage(uri,ctx)
-                result.value = imageFromResult(ctx, uri)
                 onEvent(DashboardEvent.GetTextFromPicture(file))
             }
         }
+    val launcherImage =
+        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) {
+            if (it != null) {
+                Utils.resizeAndRotateImage(it,ctx,uri)
+                Logger.i("EKHIW ${file.isFile} ${file.length()}")
+                onEvent(DashboardEvent.GetTextFromPicture(file))
+            }
+        }
+
+    LaunchedEffect(key1 = true) {
+        uiState.loadingState.collectLatest { isLoading ->
+            loadingState = isLoading
+        }
+    }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -76,29 +94,32 @@ fun DashboardScreen(
                         onDismissRequest = { requestToOpen = false },
                     ) {
                         DropdownMenuItem(
-                            enabled = !BuildConfig.FS_ONLY && !uiState.isLoading,
+                            enabled = !BuildConfig.FS_ONLY && !loadingState,
                             onClick = {
                                 requestToOpen = false
-                                launcher.launch(uri)
+                                launcherCamera.launch(uri)
                             }
                         ) {
-                            Text(text = if (!BuildConfig.FS_ONLY && uiState.isLoading) "Loading.." else "From camera")
+                            Text(text = if (!BuildConfig.FS_ONLY && loadingState) "Loading.." else "From camera")
                         }
                         DropdownMenuItem(
-                            enabled = BuildConfig.FS_ONLY && !uiState.isLoading,
+                            enabled = BuildConfig.FS_ONLY && !loadingState,
                             onClick = {
                                 requestToOpen = false
-                                launcher.launch(uri)
+                                launcherImage.launch(
+                                    PickVisualMediaRequest(
+                                        mediaType = ActivityResultContracts.PickVisualMedia.ImageOnly
+                                    )
+                                )
                             }
                         ) {
-                            Text(text = if (BuildConfig.FS_ONLY && uiState.isLoading) "Loading.." else "From gallery")
+                            Text(text = if (BuildConfig.FS_ONLY && loadingState) "Loading.." else "From gallery")
                         }
                     }
                     FloatingActionButton(
                         onClick = {
                             requestToOpen = true
                         },
-                        backgroundColor = Color.Red,
                         contentColor = Color.White,
                     ) { Icon(Icons.Filled.Add, "Add") }
                 }
@@ -138,8 +159,8 @@ fun DashboardScreen(
                                         }
                                     }
                                     Box(modifier = Modifier
-                                            .fillMaxWidth(1f)
-                                            .padding(12.dp),
+                                        .fillMaxWidth(1f)
+                                        .padding(12.dp),
                                         contentAlignment = Alignment.Center) {
                                         Button(onClick = { onEvent(DashboardEvent.CloseDialog) }) {
                                             Text(text = "Close")
@@ -150,27 +171,42 @@ fun DashboardScreen(
                             }
                         }
                     }
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()) {
-                        ListOcrResult(uiState)
+                    Column(modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)) {
+                        Text(text = "MathSnap",
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 18.sp)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        AnimatedVisibility(
+                            visible = loadingState,
+                            enter = fadeIn() + slideInVertically(),
+                            exit = fadeOut() + slideOutVertically()
+                        ) {
+                            Box(modifier = Modifier
+                                .fillMaxWidth()
+                                .height(64.dp),
+                                contentAlignment = Alignment.Center) {
+                                Text(text = "Loading...",
+                                    modifier = Modifier
+                                        .padding(12.dp)
+                                        .testTag(TestTags.LOADING_TEXT))
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        if (uiState.list.isEmpty()) {
+                            Text(text = "List is empty, click add to scan text")
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()) {
+                                ListOcrResult(uiState)
+                            }
+                        }
                     }
                 }
             }
         )
-    }
-}
-
-private fun imageFromResult(context: Context, uri: Uri): Bitmap? {
-    return try {
-        val parcelFileDescriptor = context.contentResolver.openFileDescriptor(uri, "r")
-        val fileDescriptor: FileDescriptor? = parcelFileDescriptor?.fileDescriptor
-        val bitmap = BitmapFactory.decodeFileDescriptor(fileDescriptor)
-        parcelFileDescriptor?.close()
-        return bitmap
-    } catch (e: IOException) {
-        Logger.e("${e.message}")
-        null
     }
 }
 
@@ -183,7 +219,17 @@ fun ListOcrResult (uiState: DashboardUiState) {
             .background(Color.Transparent)
     ) {
         items(uiState.list) { item ->
-            Text(text = "${item.leftNumber}${item.mathOperator}${item.rightNumber}=${item.result}")
+            Card(
+                shape = RoundedCornerShape(8.dp),
+                backgroundColor = tailwindColors().gray800,
+                modifier = Modifier
+                    .padding(4.dp)
+                    .fillMaxWidth()
+            ) {
+                Text(
+                    modifier = Modifier.padding(12.dp),
+                    text = "${item.leftNumber}${item.mathOperator}${item.rightNumber}=${item.result}")
+            }
         }
     }
 }
@@ -193,10 +239,14 @@ fun ListOcrResult (uiState: DashboardUiState) {
 @Composable
 fun DefaultPreview() {
     MathSnapTheme {
-//        DashboardScreen(uiState = DashboardUiState(
-//            list = mutableListOf()
-//        ), onEvent = { event ->
-//
-//        })
+        val itemList = mutableListOf<OcrResultItem>()
+        (1..100).forEach {
+            itemList.add(OcrResultItem("4","*","2","$it"))
+        }
+        DashboardScreen(uiState = DashboardUiState(
+            list = itemList
+        ), onEvent = { event ->
+
+        })
     }
 }

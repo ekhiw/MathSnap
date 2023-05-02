@@ -26,13 +26,10 @@ object Utils {
         return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
     }
 
-    fun resizeAndRotateImage(uri: Uri, context: Context) {
+    fun resizeAndRotateImage(uri: Uri, context: Context, output: Uri? = null,rotate: Boolean = true) {
 
         val inputStream = context.contentResolver.openInputStream(uri)
-        val resultBitmap = rotateBitmap(BitmapFactory.decodeStream(inputStream))
-
-
-
+        val resultBitmap = rotateBitmap(BitmapFactory.decodeStream(inputStream), if(rotate) 90 else 0)
         val outputStream = ByteArrayOutputStream()
         resultBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
 
@@ -43,14 +40,14 @@ object Utils {
             quality -= 5
         }
 
-        val outputStream2 = context.contentResolver.openOutputStream(uri)
+        val outputStream2 = context.contentResolver.openOutputStream(output ?: uri)
         outputStream2?.write(outputStream.toByteArray())
         outputStream2?.close()
     }
 
     fun createImageFile(context: Context): File {
         // Create an image file name
-        val timeStamp: String = Utils.getCurrentDateString()
+        val timeStamp: String = getCurrentDateString()
         val storageDir: File? = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
         return File.createTempFile(
             "${timeStamp}_", /* prefix */
