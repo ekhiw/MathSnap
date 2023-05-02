@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.FileProvider
 import com.orhanobut.logger.Logger
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import xyz.potasyyum.mathsnap.BuildConfig
 import xyz.potasyyum.mathsnap.R
@@ -49,6 +50,7 @@ fun DashboardScreen(
     val scaffoldState = rememberScaffoldState()
 
     var loadingState by remember { mutableStateOf(false) }
+    var ocrList by remember { mutableStateOf(OcrResultList()) }
     val ctx = LocalContext.current
     val file = Utils.createImageFile(ctx)
     val uri: Uri = FileProvider.getUriForFile(
@@ -76,6 +78,12 @@ fun DashboardScreen(
     LaunchedEffect(key1 = true) {
         uiState.loadingState.collectLatest { isLoading ->
             loadingState = isLoading
+        }
+    }
+
+    LaunchedEffect(key1 = true) {
+        uiState.listState.collect { ocrListFromViewModel ->
+            ocrList = ocrListFromViewModel
         }
     }
 
@@ -222,13 +230,13 @@ fun DashboardScreen(
                             }
                         }
                         Spacer(modifier = Modifier.height(4.dp))
-                        if (uiState.list.ocrResultList.isEmpty()) {
+                        if (ocrList.ocrResultList.isEmpty()) {
                             Text(text = "List is empty, click add to scan text")
                         } else {
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()) {
-                                ListOcrResult(uiState)
+                                ListOcrResult(ocrList)
                             }
                         }
                     }
@@ -239,14 +247,14 @@ fun DashboardScreen(
 }
 
 @Composable
-fun ListOcrResult (uiState: DashboardUiState) {
+fun ListOcrResult (result: OcrResultList) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(32.dp)
             .background(Color.Transparent)
     ) {
-        items(uiState.list.ocrResultList) { item ->
+        items(result.ocrResultList) { item ->
             Card(
                 shape = RoundedCornerShape(8.dp),
                 backgroundColor = tailwindColors().gray800,
@@ -272,7 +280,8 @@ fun DefaultPreview() {
             itemList.add(OcrResultItem("4","*","2","$it"))
         }
         DashboardScreen(uiState = DashboardUiState(
-            list = OcrResultList(itemList)
+            list = OcrResultList(itemList),
+            listState = MutableStateFlow(OcrResultList(itemList))
         ), onEvent = { event ->
 
         })

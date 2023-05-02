@@ -39,11 +39,11 @@ class DashboardViewModel @Inject constructor(
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            Logger.i("EKHIW JSON FILE\n${Utils.decryptText(ocrRepository.getListFromJsonFile())}")
             ocrRepository.ocrList.collect {
-                if (it != null && !it.ocrResultList.isEmpty()) {
+                if (it != null && it.ocrResultList.isNotEmpty()) {
                     val resultList = OcrResultList(it.ocrResultList)
                     withContext(Dispatchers.Main) {
+                        uiState.listState.emit(resultList)
                         uiState = uiState.copy(
                             list = resultList
                         )
@@ -80,20 +80,22 @@ class DashboardViewModel @Inject constructor(
                         "$result"
                     )
 
+                    val tempList = uiState.list
+                    tempList.ocrResultList.add(ocrResultItem)
+
                     if (uiState.tabState == TabPos.ROOMTAB) {
-                        Logger.i("EKHIW should save to db")
+                        ocrRepository.insertOcrResult(ocrResultItem)
+                    } else {
+                        val adapter = moshi.adapter<OcrResultList>()
+                        ocrRepository.writeListToJsonFile(Utils.encryptText(adapter.toJson(tempList)))
                     }
 
-
-                    ocrRepository.insertOcrResult(ocrResultItem)
-                    val test = uiState.list
-                    test.ocrResultList.add(ocrResultItem)
-
-                    val adapter = moshi.adapter<OcrResultList>()
-                    ocrRepository.writeListToJsonFile(Utils.encryptText(adapter.toJson(test)))
+                    viewModelScope.launch(Dispatchers.Main) {
+                        uiState.listState.emit(tempList)
+                    }
 
                     uiState = uiState.copy(
-                        list = test,
+                        list = tempList,
                         equationResult = it,
                     )
                 } else {
@@ -104,6 +106,52 @@ class DashboardViewModel @Inject constructor(
                 openResultDialog = true,
             )
 
+        }
+    }
+
+    private fun handleTabChange(tab: TabPos) {
+        when(tab) {
+            TabPos.ROOMTAB -> {
+                viewModelScope.launch(Dispatchers.IO) {
+                    ocrRepository.ocrList.collect {
+                        if (it != null && it.ocrResultList.isNotEmpty()) {
+                            val resultList = OcrResultList(it.ocrResultList)
+                            withContext(Dispatchers.Main) {
+                                uiState.listState.emit(resultList)
+                                uiState = uiState.copy(
+                                    list = resultList
+                                )
+                            }
+                        } else {
+                            uiState.listState.emit(OcrResultList())
+                            uiState = uiState.copy(
+                                list = OcrResultList()
+                            )
+                        }
+                    }
+                }
+            }
+            TabPos.FILETAB -> {
+                val storageString = ocrRepository.getListFromJsonFile()
+                if (storageString.isNotEmpty()) {
+                    val decryptString = Utils.decryptText(storageString)
+                    val adapter = moshi.adapter<OcrResultList>()
+                    val decryptedResult = adapter.fromJson(decryptString)
+                    viewModelScope.launch(Dispatchers.Main) {
+                        uiState.listState.emit(decryptedResult ?: OcrResultList())
+                    }
+                    uiState = uiState.copy(
+                        list = decryptedResult ?: OcrResultList(),
+                    )
+                } else {
+                    viewModelScope.launch(Dispatchers.Main) {
+                        uiState.listState.emit(OcrResultList())
+                    }
+                    uiState = uiState.copy(
+                        list = OcrResultList(),
+                    )
+                }
+            }
         }
     }
 
@@ -128,6 +176,7 @@ class DashboardViewModel @Inject constructor(
                 }
             }
             is DashboardEvent.ChangeTabSelection -> {
+                handleTabChange(event.tab)
                 uiState = uiState.copy(
                     tabState = event.tab
                 )

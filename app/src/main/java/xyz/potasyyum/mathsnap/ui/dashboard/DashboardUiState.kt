@@ -8,6 +8,7 @@ import xyz.potasyyum.mathsnap.domain.TabPos
 
 data class DashboardUiState(
     var list: OcrResultList = OcrResultList(),
+    var listState: MutableStateFlow<OcrResultList> = MutableStateFlow(OcrResultList()),
     var parsedTextList: MutableList<String> = mutableListOf(),
     var openResultDialog : Boolean = false,
     var equationResult : String = "",
