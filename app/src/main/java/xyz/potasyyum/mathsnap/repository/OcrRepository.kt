@@ -13,19 +13,31 @@ import xyz.potasyyum.mathsnap.database.AppDatabase
 import xyz.potasyyum.mathsnap.database.OcrResultEntity
 import xyz.potasyyum.mathsnap.database.asDomainModel
 import xyz.potasyyum.mathsnap.domain.OcrResultItem
+import xyz.potasyyum.mathsnap.domain.OcrResultList
 import xyz.potasyyum.mathsnap.network.OcrApi
 import xyz.potasyyum.mathsnap.network.model.OcrRequest
 import xyz.potasyyum.mathsnap.network.model.OcrResponse
 import xyz.potasyyum.mathsnap.util.Resource
+import java.io.File
 import javax.inject.Inject
+import javax.inject.Named
 
 class OcrRepository @Inject constructor(
     private val ocrApi: OcrApi,
-    private val appDatabase: AppDatabase
+    private val appDatabase: AppDatabase,
+    @Named("jsonfile") private val jsonFile : File
 ) {
 
-    val ocrList: Flow<List<OcrResultItem>?> =
+    val ocrList: Flow<OcrResultList?> =
         appDatabase.ocrResultDao.getOcrList().map { it?.asDomainModel() }
+
+    fun getListFromJsonFile() : String {
+        return jsonFile.readText()
+    }
+
+    fun writeListToJsonFile(jsonString: String) {
+        jsonFile.writeText(jsonString)
+    }
 
     fun insertOcrResult(ocrResultItem : OcrResultItem) {
         val ocrResultEntity = OcrResultEntity(

@@ -56,6 +56,15 @@ object Utils {
         )
     }
 
+    fun encryptText(text: String) : String{
+        val shift = 3
+        return text.map { (it.code + shift).toChar() }.joinToString("")
+    }
+
+    fun decryptText(text: String) : String {
+        val shift = 3
+        return text.map { (it.code - shift).toChar() }.joinToString("")
+    }
     fun calculateMathExpression(numbers: List<String>): Double {
         val firstNumber : Double = numbers[0].toDoubleOrNull() ?: 0.toDouble()
         val mathOps = numbers[1]

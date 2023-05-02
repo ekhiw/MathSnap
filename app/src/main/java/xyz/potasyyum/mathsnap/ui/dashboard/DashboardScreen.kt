@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.collectLatest
 import xyz.potasyyum.mathsnap.BuildConfig
 import xyz.potasyyum.mathsnap.core.utils.TestTags
 import xyz.potasyyum.mathsnap.domain.OcrResultItem
+import xyz.potasyyum.mathsnap.domain.OcrResultList
 import xyz.potasyyum.mathsnap.ui.theme.MathSnapTheme
 import xyz.potasyyum.mathsnap.ui.theme.tailwindColors
 import xyz.potasyyum.mathsnap.util.Utils
@@ -185,7 +186,7 @@ fun DashboardScreen(
                         ) {
                             Box(modifier = Modifier
                                 .fillMaxWidth()
-                                .height(64.dp),
+                                .height(52.dp),
                                 contentAlignment = Alignment.Center) {
                                 Text(text = "Loading...",
                                     modifier = Modifier
@@ -194,7 +195,7 @@ fun DashboardScreen(
                             }
                         }
                         Spacer(modifier = Modifier.height(4.dp))
-                        if (uiState.list.isEmpty()) {
+                        if (uiState.list.ocrResultList.isEmpty()) {
                             Text(text = "List is empty, click add to scan text")
                         } else {
                             Box(
@@ -218,7 +219,7 @@ fun ListOcrResult (uiState: DashboardUiState) {
             .padding(32.dp)
             .background(Color.Transparent)
     ) {
-        items(uiState.list) { item ->
+        items(uiState.list.ocrResultList) { item ->
             Card(
                 shape = RoundedCornerShape(8.dp),
                 backgroundColor = tailwindColors().gray800,
@@ -244,7 +245,7 @@ fun DefaultPreview() {
             itemList.add(OcrResultItem("4","*","2","$it"))
         }
         DashboardScreen(uiState = DashboardUiState(
-            list = itemList
+            list = OcrResultList(itemList)
         ), onEvent = { event ->
 
         })

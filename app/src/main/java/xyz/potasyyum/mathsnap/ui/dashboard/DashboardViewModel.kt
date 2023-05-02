@@ -1,12 +1,16 @@
 package xyz.potasyyum.mathsnap.ui.dashboard
 
+import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.core.content.FileProvider
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.orhanobut.logger.Logger
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.adapter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
@@ -14,16 +18,20 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import xyz.potasyyum.mathsnap.BuildConfig
 import xyz.potasyyum.mathsnap.domain.OcrResultItem
+import xyz.potasyyum.mathsnap.domain.OcrResultList
+import xyz.potasyyum.mathsnap.domain.TabPos
 import xyz.potasyyum.mathsnap.network.model.OcrRequest
 import xyz.potasyyum.mathsnap.network.model.OcrResponse
 import xyz.potasyyum.mathsnap.repository.OcrRepository
 import xyz.potasyyum.mathsnap.util.Utils
 import javax.inject.Inject
 
+@OptIn(ExperimentalStdlibApi::class)
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val ocrRepository: OcrRepository
+    private val ocrRepository: OcrRepository,
+    private val moshi: Moshi
 ) : ViewModel() {
 
     var uiState by mutableStateOf(DashboardUiState())
@@ -31,10 +39,10 @@ class DashboardViewModel @Inject constructor(
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
+            Logger.i("EKHIW JSON FILE\n${Utils.decryptText(ocrRepository.getListFromJsonFile())}")
             ocrRepository.ocrList.collect {
-                if (!it.isNullOrEmpty()) {
-                    val resultList = mutableListOf<OcrResultItem>()
-                    resultList.addAll(it)
+                if (it != null && !it.ocrResultList.isEmpty()) {
+                    val resultList = OcrResultList(it.ocrResultList)
                     withContext(Dispatchers.Main) {
                         uiState = uiState.copy(
                             list = resultList
@@ -44,6 +52,7 @@ class DashboardViewModel @Inject constructor(
             }
         }
     }
+
 
     private fun handleOcrResult(response: OcrResponse) {
         response.parsedResults?.let { parsedList ->
@@ -71,10 +80,17 @@ class DashboardViewModel @Inject constructor(
                         "$result"
                     )
 
+                    if (uiState.tabState == TabPos.ROOMTAB) {
+                        Logger.i("EKHIW should save to db")
+                    }
+
+
                     ocrRepository.insertOcrResult(ocrResultItem)
-                    val test = mutableListOf<OcrResultItem>()
-                    test.addAll(uiState.list)
-                    test.add(ocrResultItem)
+                    val test = uiState.list
+                    test.ocrResultList.add(ocrResultItem)
+
+                    val adapter = moshi.adapter<OcrResultList>()
+                    ocrRepository.writeListToJsonFile(Utils.encryptText(adapter.toJson(test)))
 
                     uiState = uiState.copy(
                         list = test,
@@ -110,6 +126,11 @@ class DashboardViewModel @Inject constructor(
                         uiState.loadingState.emit(false)
                     }
                 }
+            }
+            is DashboardEvent.ChangeTabSelection -> {
+                uiState = uiState.copy(
+                    tabState = event.tab
+                )
             }
             is DashboardEvent.CloseDialog -> {
                 uiState = uiState.copy(
