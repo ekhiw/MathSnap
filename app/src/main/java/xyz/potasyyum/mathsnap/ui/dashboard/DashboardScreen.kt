@@ -238,7 +238,7 @@ fun DashboardScreen(
                         .fillMaxWidth()
                         .padding(16.dp))
                     {
-                        Text(text = "MathSnap",
+                        Text(text = "MathSnap ${BuildConfig.APP_VERSION}",
                             fontWeight = FontWeight.ExtraBold,
                             fontSize = 18.sp)
                         Spacer(modifier = Modifier.height(4.dp))
